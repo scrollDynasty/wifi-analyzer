@@ -2,11 +2,27 @@
 
 [![Rust](https://img.shields.io/badge/Rust-1.70+-blue.svg)](https://www.rust-lang.org)
 [![License](https://img.shields.io/badge/License-Custom-red.svg)](LICENSE)
-[![Build Status](https://github.com/yourusername/wifi-analyzer/actions/workflows/rust.yml/badge.svg)](https://github.com/yourusername/wifi-analyzer/actions)
+[![Build Status](https://github.com/scrollDynasty/wifi-analyzer/actions/workflows/rust.yml/badge.svg)](https://github.com/scrollDynasty/wifi-analyzer/actions)
+[![Rust CI](https://github.com/scrollDynasty/wifi-analyzer/actions/workflows/rust.yml/badge.svg)](https://github.com/scrollDynasty/wifi-analyzer/actions/workflows/rust.yml)
+[![Rust Documentation](https://img.shields.io/badge/Rust-Documentation-orange)](https://doc.rust-lang.org/book/)
 
 ⚠️ **ВАЖНО: Этот проект защищен специальной лицензией. Перед использованием кода необходимо получить разрешение автора.**
 
 Современный инструмент для анализа WiFi сетей, написанный на Rust. Предназначен для образовательных целей и изучения принципов работы беспроводных сетей.
+
+## 🦀 О проекте
+
+Этот проект написан на Rust - современном языке программирования, который обеспечивает:
+- 🚀 Высокую производительность
+- 🔒 Безопасность памяти
+- 🛡️ Защиту от ошибок
+- 📦 Отличную систему управления пакетами
+
+### Технический стек
+- Rust 1.70+
+- Cargo (менеджер пакетов Rust)
+- Системные библиотеки Linux
+- Сетевые протоколы 802.11
 
 ## ⚠️ Ограничения использования
 
@@ -36,7 +52,7 @@
 
 ```bash
 # Клонирование репозитория (только после получения разрешения)
-git clone https://github.com/yourusername/wifi-analyzer.git
+git clone https://github.com/scrollDYnasty/wifi-analyzer.git
 cd wifi-analyzer
 
 # Сборка проекта

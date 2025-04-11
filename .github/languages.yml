@@ -1,0 +1,16 @@
+Rust:
+  type: programming
+  color: "#dea584"
+  extensions:
+    - ".rs"
+    - ".toml"
+    - ".lock"
+  filenames:
+    - "Cargo.toml"
+    - "Cargo.lock"
+  group: Rust
+  search_term: rust
+  ace_mode: rust
+  codemirror_mode: rust
+  codemirror_mime_type: "text/x-rustsrc"
+  language_id: 327 
