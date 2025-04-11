@@ -2,6 +2,13 @@
 name = "wifi-analyzer"
 version = "0.1.0"
 edition = "2021"
+authors = ["scrollDynasty <ymarumar502@gmail.com>"]
+description = "WiFi analyzer tool written in Rust"
+license = "Custom"
+repository = "https://github.com/scrollDynasty/wifi-analyzer"
+readme = "README.md"
+keywords = ["wifi", "analyzer", "network", "security"]
+categories = ["network-programming", "security-tools"]
 
 [dependencies]
 pcap = "1.0"
@@ -13,4 +20,16 @@ anyhow = "1.0"
 log = "0.4"
 env_logger = "0.10"
 socket2 = "0.5"
-raw-socket = "0.2" 
+pnet = "0.35"
+bytes = "1.5"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = 'abort'
+strip = true
+
+[net]
+git-fetch-with-cli = true
+offline = false 

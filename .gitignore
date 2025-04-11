@@ -1,0 +1,42 @@
+# Rust специфичные файлы
+/target/
+**/*.rs.bk
+Cargo.lock
+
+# IDE и редакторы
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Системные файлы
+.DS_Store
+Thumbs.db
+
+# Логи и временные файлы
+*.log
+*.tmp
+*.temp
+
+# Скомпилированные бинарники
+/wifi-analyzer
+/run.sh
+
+# Конфигурационные файлы с чувствительными данными
+.env
+*.env
+config.toml
+
+# Документация
+/doc/
+/docs/
+
+# Тестовые данные
+/test_data/
+*.pcap
+*.cap
+
+# Кэш Cargo
+.cargo/registry/
+.cargo/git/ 

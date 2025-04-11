@@ -1,16 +1,15 @@
 use anyhow::{Context, Result};
 use clap::Parser;
 use colored::*;
-use log::{error, info, warn};
-use pcap::{Active, Capture, Device};
+use log::{info, warn};
+use pcap::{Active, Capture};
 use std::collections::HashMap;
 use std::process::Command;
-use std::net::MacAddr;
 
 mod packet;
 mod deauth;
-use packet::{WifiHeader, extract_ssid, extract_signal_strength, extract_channel};
-use deauth::{send_deauth, deauth_all_clients};
+use packet::{WifiHeader, extract_ssid, extract_signal_strength, extract_channel, parse_mac_addr};
+use deauth::deauth_all_clients;
 
 /// Структура для хранения информации о точке доступа
 #[derive(Debug, Clone)]
@@ -56,7 +55,7 @@ fn main() -> Result<()> {
     
     // Если указан MAC-адрес для деаутентификации
     if let Some(target_mac) = args.deauth {
-        let target_mac = MacAddr::parse_str(&target_mac)?;
+        let target_mac = parse_mac_addr(&target_mac)?;
         
         // Ждем обнаружения целевой точки доступа
         while let Ok(packet) = cap.next_packet() {
@@ -69,13 +68,14 @@ fn main() -> Result<()> {
                 info!("Найдена целевая точка доступа: {}", ap.ssid);
                 
                 // Конвертируем MAC-адреса клиентов
-                let clients: Vec<MacAddr> = ap.clients
+                let clients: Vec<[u8; 6]> = ap.clients
                     .iter()
-                    .filter_map(|c| MacAddr::parse_str(c).ok())
+                    .filter_map(|c| parse_mac_addr(c).ok())
+                    .map(|mac| mac.octets())
                     .collect();
                 
                 // Деаутентифицируем всех клиентов
-                deauth_all_clients(&args.interface, target_mac, &clients)?;
+                deauth_all_clients(&args.interface, target_mac.octets(), &clients)?;
                 break;
             }
         }

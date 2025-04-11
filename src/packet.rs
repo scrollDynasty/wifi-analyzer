@@ -1,6 +1,6 @@
 use anyhow::Result;
 use pcap::Packet;
-use std::net::MacAddr;
+use pnet::util::MacAddr;
 
 /// Структура для представления заголовка 802.11
 #[derive(Debug)]
@@ -14,7 +14,7 @@ pub struct WifiHeader {
 }
 
 /// Типы фреймов 802.11
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum FrameType {
     Management,
     Control,
@@ -51,9 +51,9 @@ impl WifiHeader {
         Ok(WifiHeader {
             frame_control: u16::from_le_bytes([data[0], data[1]]),
             duration: u16::from_le_bytes([data[2], data[3]]),
-            address1: MacAddr::from_bytes(&data[4..10])?,
-            address2: MacAddr::from_bytes(&data[10..16])?,
-            address3: MacAddr::from_bytes(&data[16..22])?,
+            address1: MacAddr::new(data[4], data[5], data[6], data[7], data[8], data[9]),
+            address2: MacAddr::new(data[10], data[11], data[12], data[13], data[14], data[15]),
+            address3: MacAddr::new(data[16], data[17], data[18], data[19], data[20], data[21]),
             sequence_control: u16::from_le_bytes([data[22], data[23]]),
         })
     }
@@ -115,7 +115,7 @@ pub fn extract_ssid(packet: &Packet) -> Option<String> {
 }
 
 /// Извлечение уровня сигнала из пакета
-pub fn extract_signal_strength(packet: &Packet) -> i8 {
+pub fn extract_signal_strength(_packet: &Packet) -> i8 {
     // В реальном приложении здесь нужно использовать radiotap заголовок
     // или другую информацию о радио-параметрах
     0
@@ -142,4 +142,20 @@ pub fn extract_channel(packet: &Packet) -> Option<u8> {
     }
     
     None
+}
+
+/// Функция для парсинга MAC-адреса из строки
+pub fn parse_mac_addr(mac_str: &str) -> Result<MacAddr> {
+    let parts: Vec<&str> = mac_str.split(':').collect();
+    if parts.len() != 6 {
+        return Err(anyhow::anyhow!("Неверный формат MAC-адреса"));
+    }
+    
+    let bytes: Result<Vec<u8>, _> = parts
+        .iter()
+        .map(|&s| u8::from_str_radix(s, 16))
+        .collect();
+    
+    let bytes = bytes?;
+    Ok(MacAddr::new(bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5]))
 } 
